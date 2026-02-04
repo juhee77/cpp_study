@@ -2,33 +2,28 @@ cmake_minimum_required(VERSION 4.1)
 project(01_basics)
 
 set(CMAKE_CXX_STANDARD 20)
-
-add_executable(01_basics_memory_hack memory_hack.cpp)
-add_executable(01_basics_array_pointer array_pointer.cpp)
-add_executable(01_basics_15999 19599_이진삼진탐색.cpp)
-add_executable(01_basics_30030 30030_스위트콘가격구하기_basic.cpp)
-add_executable(01_basics_input_output input_output.cpp)
-add_executable(01_basics_heap_memory heap_memory.cpp)
+# --- 1. 여러 파일이 합쳐져야 하는 경우 (수동 등록) ---
 add_executable(header_test main.cpp IntArray.cpp IntArray.h)
 
-# --- 자동 등록 스크립트 ---
-# 폴더 내의 모든 .cpp 파일을 찾아서
-file(GLOB ALL_CPP_FILES "*.cpp")
+# --- 2. 나머지 파일 자동 등록 (알고리즘 문제 풀이용) ---
+# 현재 폴더의 모든 .cpp 파일을 찾습니다.
+file(GLOB ALL_CPP_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 foreach(SOURCE_FILE ${ALL_CPP_FILES})
     get_filename_component(FILE_NAME ${SOURCE_FILE} NAME_WE)
     
-    # 제외할 파일 목록 (수동으로 등록했거나, main이 없는 파일들)
-    set(EXCLUDE_FILES "main" "IntArray")
+    # 수동으로 등록했거나, 실행 파일이 되면 안 되는 파일들 제외
+    # main: header_test에 포함됨
+    # IntArray: header_test에 포함됨 (main 없음)
+    set(EXCLUDED_FILES "main" "IntArray")
     
-    # 이미 등록된 타겟인지, 혹은 제외 목록에 있는지 확인
-    list(FIND EXCLUDE_FILES ${FILE_NAME} EXCLUDE_INDEX)
-    if(NOT TARGET 01_basics_${FILE_NAME} AND ${EXCLUDE_INDEX} EQUAL -1)
-        # main 함수가 있는 파일만 실행 파일로 등록 (단순 텍스트 검색)
-        file(READ ${SOURCE_FILE} FILE_CONTENT)
-        if("${FILE_CONTENT}" MATCHES "int[ \t\n\r]+main")
-            add_executable(01_basics_${FILE_NAME} ${SOURCE_FILE})
-        endif()
+    list(FIND EXCLUDED_FILES ${FILE_NAME} INDEX)
+    
+    # 제외 목록에 없고, 아직 타겟으로 등록되지 않았다면 추가
+    if(${INDEX} EQUAL -1 AND NOT TARGET 01_basics_${FILE_NAME})
+        # main 함수가 있는지 정밀 검사 대신, 일단 알고리즘 파일로 간주하고 추가
+        # (컴파일 에러가 나면 main이 없는 파일임)
+        add_executable(01_basics_${FILE_NAME} ${SOURCE_FILE})
     endif()
 endforeach()
 
